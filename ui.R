@@ -4,7 +4,7 @@ library(shiny)
 shinyUI(fluidPage(
 
   # Application title
-  titlePanel("Mike's ODE"),
+  titlePanel("One Migrant Too Many"),
 
   # Sidebar with a slider input for the number of bins
   sidebarLayout(
