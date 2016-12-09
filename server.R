@@ -2,6 +2,8 @@ library(shiny)
 library(ggplot2)
 library(dplyr)
 library(deSolve)
+library(foreach)
+library(rsconnect)
 
 # Define server logic required to draw a histogram
 shinyServer(function(input, output) {
@@ -39,7 +41,7 @@ shinyServer(function(input, output) {
     list(c(dH_within,dH_generalMike,dH_withinOren,dH_generalOren))
   }
 
-  trajectories <- function(generations = 2000, L = 5, N = 50, mu = 1e-8, Ntot0 = 500*100, m = 0, deriv="mike") {
+  trajectories <- function(generations = 2000, L = 5, N = 50, mu = 1e-8, Ntot0 = 500*100, m = 1, deriv="mike") {
     library(dplyr)
     H0 = 4 * input$Ntot0 * input$mu
     yini <- c(H0,H0,H0,H0)
@@ -56,9 +58,19 @@ shinyServer(function(input, output) {
   }
 
 
-  #input <- data_frame(L = 5, N = 50, Ntot0 = 500*100, mu = 1e-8, generations = 2000)
+
+  #input <- list(L = 5, N = 50, Ntot0 = 500*100, mu = 1e-8, generations = 2000, migration = c("0", "1/N", "1/10N", "1"), deriv="mike")
   output$distPlot <- renderPlot({
-    plot_data <- trajectories(input$generations, input$L, input$N, input$mu, input$Ntot0)
-    ggplot(plot_data, aes(x = gens, y = heterozygocity, color = type)) + geom_line() + xlab("Generation") + ylab("Heterozygocity")
+    
+    plot_data <- foreach(m_chr = input$migration, .combine = rbind) %do% {
+      m_temp <- gsub("1/N", "1/(1/input$N)", m_chr)
+      m <- eval(parse(text = gsub("1/([0-9]+)N", "1/(\\1 * input$N)", m_temp)))
+      out <- trajectories(input$generations, input$L, input$N, input$mu, input$Ntot0, m, input$deriv)
+      out$migration = m_chr
+      out
+    }
+    plot_data$migration <- factor(plot_data$migration, levels = c("0","1/1000N","1/100N","1/10N" ,"1/N" ,"1/10" ,"1/100","1"))
+    ggplot(plot_data, aes(x = gens, y = heterozygocity, color = migration, linetype = type)) + geom_line(size=2, alpha = 0.5) + xlab("Generation") + ylab("Heterozygocity")
   })
 })
+
