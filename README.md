@@ -2,6 +2,8 @@
 
 ##[Interactive Plot](https://ryantaylor.shinyapps.io/om2m/)
 
+<iframe id="example1" src="https://ryantaylor.shinyapps.io/om2m/" style="border: none; width: 100%; height: 500px" frameborder="0"></iframe>
+
 ## Calculation of heterozygosity trajectories
 Function that returns (dHs/dt, dHt/dt)
 Assumptions: infinite alleles per site.
