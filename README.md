@@ -32,3 +32,17 @@ HG(t+1)-HG(t) = 1/L(H(t)-HG(t)) + 2mu(1-HG(t))
 
 Which looks, admittedly, quite different from Mike's derivation which is based on a
 forward-in-time-in-his-head intuition/derivation-that-I-didn't-follow.
+
+
+
+Ok, I figured out a way to explain the derivative for the total population heterozygosity Oren should be happier with. For the sake of this email, I'm going to use H_tot(t), H_s(t), and H_ns(t) to be the probability that a pair of sampled alleles are different when they are sampled from the total population, the same deme, or different demes, respectively. Thus, if L is the number of demes, these probabilities are related by H_tot = (1/L) H_s + (1-1/L)H_ns. The key to finding the change in H_tot due to coalescence by a simple argument that looks backward one generation is to use this break down of H_tot. First, we write
+
+H_tot(t+1) = (1/L) H_s(t+1) + (1-1/L) H_ns(t+1)
+
+and then note that H_ns(t+1) = H_ns(t) (since coalescence can't happen across demes) and H_s(t+1) = (1-1/(2N)) H_s(t) (since this is what we already agreed on for H_s(t+1)). Then, we have 
+
+H_tot(t+1) = (1/L) (1-1/N) H_s(t) + (1-1/L) H_ns(t) = (1/L) H_s(t) + (1-1/L) H_ns(t) - (1/(2*N*L)) H_s(t)
+
+or 
+
+H_tot(t+1) - H_tot(t) = - 1/(2*N*L) H_s(t),
