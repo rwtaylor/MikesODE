@@ -69,7 +69,7 @@ shinyServer(function(input, output) {
       plot_data <- plot_data %>% filter(type == "total")
     }
     
-    p <- ggplot(plot_data, aes(x = gens, y = heterozygocity, color = migration, linetype = type, size = type)) + geom_line(alpha = 0.9) + xlab("Generation") + ylab("Heterozygocity")
+    p <- ggplot(plot_data, aes(x = gens, y = heterozygocity, color = migration, linetype = type, size = type)) + geom_line(alpha = 0.9) + xlab("Generation") + ylab("Heterozygosity")
     
     font_size = 24
     
@@ -88,7 +88,7 @@ shinyServer(function(input, output) {
     } else if(input$pstyle == "grey") {
       p <- p + theme_grey(base_size = font_size)
     }
-    p + scale_color_manual(values = colors, name = "Migration") + scale_linetype_manual(values = c("total" = "solid", "within" = "dotted"), name = "Heterozygocity") + scale_size_manual(values = c("total" = 3, "within" = 5), name = "Heterozygocity")
+    p + scale_color_manual(values = colors, name = "Migration") + scale_linetype_manual(values = c("total" = "solid", "within" = "dotted"), name = "Heterozygosity") + scale_size_manual(values = c("total" = 3, "within" = 5), name = "Heterozygosity")
   })
 
 #  input <- list(L = 5, N = 50, Ntot0 = 500*100, mu = 1e-8, generations = 2000, migration = c("0", "1/N", "1/10N", "1"))
