@@ -1,6 +1,6 @@
-.DS_Store
 .Rhistory
 .Rapp.history
 .RData
-rsconnect
 R_Fragmentation_UsedToProduceFigs
+rsconnect
+.DS_Store
