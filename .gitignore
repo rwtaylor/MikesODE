@@ -1,9 +1,6 @@
 .DS_Store
-# History files
 .Rhistory
 .Rapp.history
-# Session Data files
 .RData
-
-
 rsconnect
+R_Fragmentation_UsedToProduceFigs
