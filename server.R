@@ -68,7 +68,7 @@ output$distPlot <- renderPlot({
     plot_data <- plot_data %>% filter(type == "total")
   }
 
-  p <- ggplot(plot_data, aes(x = gens, y = heterozygocity, color = migration, linetype = type, size = type)) + geom_line(alpha = 0.9) + xlab("Generation") + ylab("Heterozygosity") + ylim(c(0, 0.2))
+  p <- ggplot(plot_data, aes(x = gens, y = heterozygocity, color = migration, linetype = type, size = type)) + geom_line(alpha = 0.9) + xlab("Generation") + ylab("Heterozygosity")
 
   font_size = 24
   p <- p + theme_minimal(base_size = font_size)

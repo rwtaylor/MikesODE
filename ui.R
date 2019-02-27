@@ -54,12 +54,12 @@ shinyUI(fluidPage(
           hr(),
           sliderInput("h_critical",
             "Critical threshold of heterozygosity",
-            min = 0, max = 1, value = 0.02
+            min = 0, max = 1, value = 0.2
           ),
           hr(),
           sliderInput('h_pop_decline',
             'Heterozygosity threshold for population decline',
-            min = 0, max = 1, value = 0.01
+            min = 0, max = 1, value = 0.1
           ),
           hr(),
           sliderInput('r_proportion',
