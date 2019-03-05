@@ -7,14 +7,15 @@ library(ggthemes)
 library(shinyBS)
 
 ## Notation
-# HT = Total or global Heterozygosity
-# HS = Sub-population, local, or within-deme heterozygosity
+# HT  = Total or global Heterozygosity
+# HS  = Sub-population, local, or within-deme heterozygosity
 # R   = Fraction of alleles that are purged during a genetic rescue event
 # L   = Sub-population size
 # mu  = Mutation rate
 # N   = Current total population size
 # N0  = Total population size before anthropogenic bottleneck
 # G   = Generation or generations
+# G_t = Total number of generations to simulate
 
 colors <- c("No migration"    = rgb(0,0,255, maxColorValue = 255),
             "Full admixture"  = rgb(0,0,0, maxColorValue = 255),
