@@ -6,8 +6,25 @@ library(rsconnect)
 library(ggthemes)
 library(shinyBS)
 
-# Define server logic required to draw a histogram
-shinyServer( function(input, output) {
+shinyServer( function(input, output){
+
+  ## Notation
+  # HT = Total or global Heterozygosity
+  # HS = Sub-population, local, or within-deme heterozygosity
+  # R   = Fraction of alleles that are purged during a genetic rescue event
+  # L   = Sub-population size
+  # mu  = Mutation rate
+  # N   = Current total population size
+  # N0  = Total population size before anthropogenic bottleneck
+
+  rescue_H <- function(RG, L, HS, HT, R){
+    delta_HS = 2 * R * (HT - HS) - R^2*(HT - HS)
+    delta_HT = - HT * R^2 / L
+    out <- tibble(generation     = RG + 1,
+                  type           = c("local", "global"),
+                  heterozygosity = c(HS + delta_HS, HT + delta_HT))
+    return(out)
+  }
 
   heterozygosities <- function(times, y, parms){
     L = parms[1]; N = parms[2]; mu = parms[3]; m = parms[4]; rrate = parms[5]; rfrac = parms[6];
@@ -81,18 +98,17 @@ shinyServer( function(input, output) {
 
     while(max(out_data$generation) < input$generations){
       itt = itt + 1
-      rescue_gens <- max(out_data$generation):(max(out_data$generation) + 1)
-      rescue_data <- trajectories(generations = rescue_gens, m = 0, rrate = input$r_rate, rfrac = input$r_frac, yini = last_hets(out_data))
-      rescue_data <- rescue_data %>% filter(generation == max(generation))
+      H_R0 <- last_hets(out_data) # Heterozygosities prior to rescue
+      rescued_H <-   rescue_H(max(out_data$generation), input$L, H_R0[1], H_R0[2], input$r_frac)
       decline_data <- trajectories(
-        generations = max(rescue_data$generation)+1:input$generations,
-        m = 0, rrate = 0, yini = last_hets(rescue_data))
-      rescue_local_het <- rescue_data %>% filter(type == "local") %>% pull(heterozygosity)
+        generations = max(rescued_H$generation)+1:input$generations,
+        m = 0, rrate = 0, yini = last_hets(rescued_H))
+      rescue_local_het <- rescued_H %>% filter(type == "local") %>% pull(heterozygosity)
       if(rescue_local_het - 0.01 > input$h_scheme_1){
         gen_h_crit <- decline_data %>% filter(type == "local", heterozygosity > input$h_scheme_1) %>% pull(generation) %>% max()
         decline_data <- decline_data %>% filter(generation < gen_h_crit)
       }
-      out_data <- rbind(out_data, rescue_data, decline_data)
+      out_data <- rbind(out_data, rescued_H, decline_data)
     }
     out_data <- out_data %>% filter(generation <= input$generations)
     print(paste("scheme 1 itterations:", itt))
