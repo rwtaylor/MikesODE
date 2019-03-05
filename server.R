@@ -30,9 +30,9 @@ rescue_H <- function(RG, L, HS, HT, R){
 }
 
 model_H <- function(times, y, p){
-  dHS  = -y[1]/(2*p$N) + 2*p$mu*(1-y[1]) + 2*p$m*(y[2]-y[1])
-  dHT  = -y[1]/(2*p$N*p$L) + 2*p$mu*(1-y[2])
-  list(c(dHS,dHT))
+  dHS  = -y[1] / (2 * p$N) + 2 * p$mu * (1 - y[1]) + 2 * p$m * (y[2] - y[1])
+  dHT  = -y[1] / (2 * p$N * p$L) + 2 * p$mu *(1 - y[2])
+  list(c(dHS, dHT))
 }
 
 forward_H <- function(G, G_t, L, N, mu, m = 0, yini) {
