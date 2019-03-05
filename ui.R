@@ -42,7 +42,7 @@ shinyUI(fluidPage(
             max   = 1e6,
             value = 1e5
             ),
-          sliderInput("generations",
+          sliderInput("G_total",
             info("Generations:", "The number of generations to run the simulation for"),
             min   = 10,
             max   = 5000,
