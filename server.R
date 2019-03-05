@@ -43,7 +43,6 @@ forward_H <- function(G, G_t, L, N, mu, m = 0, yini) {
   return(out)
 }
 
-
 shinyServer( function(input, output){
 
   # Scenario functions.
@@ -72,13 +71,6 @@ shinyServer( function(input, output){
     out$scenario = "One mig per gen"
     out
   })
-
-  last_H <- function(x) {
-    x <- x %>% filter(G == max(G))
-    HS <- x %>% filter(type == "S") %>% pull(H)
-    HT <- x %>% filter(type == "T") %>% pull(H)
-    return(c(HS, HT))
-  }
 
   s_scheme_1 <- reactive({
     out <- forward_H(G = 1, G_t = input$G_total, L = input$L, N = input$N,
