@@ -18,93 +18,80 @@ shinyServer( function(input, output){
   # N0  = Total population size before anthropogenic bottleneck
 
   rescue_H <- function(RG, L, HS, HT, R){
-    delta_HS = 2 * R * (HT - HS) - R^2*(HT - HS)
+    delta_HS = 2 * R * (HT - HS) - R^2 * (HT - HS)
     delta_HT = - HT * R^2 / L
-    out <- tibble(generation     = RG + 1,
-                  type           = c("local", "global"),
-                  heterozygosity = c(HS + delta_HS, HT + delta_HT))
+    out <- tibble(generation = RG + 1, type = c("S", "T"),
+                  H = c(HS + delta_HS, HT + delta_HT))
     return(out)
   }
 
-  heterozygosities <- function(times, y, parms){
-    L = parms[1]; N = parms[2]; mu = parms[3]; m = parms[4]; rrate = parms[5]; rfrac = parms[6];
-    dH_within  = -y[1]/(2*N) + 2*mu*(1-y[1]) + 2*m*(y[2]-y[1])
-    dH_general = -y[1]/(2*N*L) + 2*mu*(1-y[2])
-    list(c(dH_within,dH_general))
+  model_H <- function(times, y, p){
+    dHS  = -y[1]/(2*p$N) + 2*p$mu*(1-y[1]) + 2*p$m*(y[2]-y[1])
+    dHT  = -y[1]/(2*p$N*p$L) + 2*p$mu*(1-y[2])
+    list(c(dHS,dHT))
   }
 
-  trajectories <- function(generations = 1:input$generations, L = input$L,
-    N = input$N, mu = input$mu, Ntot0 = input$Ntot0, m = 0, yini) {
+  forward_H <- function(generations = 1:input$generations, L = input$L,
+    N = input$N, mu = input$mu, N0 = input$N0, m = 0, yini) {
     times <- generations - min(generations) + 1
-    
-    out_m <- ode(
-               times = times,
-               y = yini,
-               func = heterozygosities,
-               parms = c(L, N, mu, m)
-             )
-    out_df <- tibble(
-                generation = rep(generations, 2),
-                type = rep(c("local", "global"), each = max(times)),
-                heterozygosity = c(out_m[, 2], out_m[, 3])
-              )
-    return(out_df)
+    plist = list(L = L, N = N, mu = mu, m = m)
+    future_H <- ode( times = times, y = yini, func = model_H, parms = plist)
+    out <- tibble(generation = rep(generations, 2),
+                  type = rep(c("S", "T"), each = max(times)),
+                  H = c(future_H[, 2], future_H[, 3]))
+    return(out)
   }
 
 
   # Scenario functions.
+  H0 <- reactive({
+    teta = 4 * input$N0 * input$mu
+    teta / (1 + teta)
+  })
 
   s_no_migration <- reactive({
-    teta = 4 * input$Ntot0 * input$mu
-    H0 = teta / (1+teta)
-
-    out <- trajectories(m = 0, yini = c(H0, H0))
+    out <- forward_H(m = 0, yini = c(H0(), H0()))
     out$scenario = "No migration"
     out
   })
 
   s_full_admix <- reactive({
-    teta = 4 * input$Ntot0 * input$mu
-    H0 = teta / (1+teta)
-    out <- trajectories(m = 1, yini = c(H0, H0))
+    out <- forward_H(m = 1, yini = c(H0(), H0()))
     out$scenario = "Full admixture"
     out
   })
 
   s_ompg <- reactive({
-    teta = 4 * input$Ntot0 * input$mu
-    H0 = teta / (1+teta)
-    out <- trajectories(m = 1/input$N, yini = c(H0, H0))
+    out <- forward_H(m = 1/input$N, yini = c(H0(), H0()))
     out$scenario = "One mig per gen"
     out
   })
 
-  last_hets <- function(x) {
+  last_H <- function(x) {
     x <- x %>% filter(generation == max(generation))
-    hl <- x %>% filter(type == "local") %>% pull(heterozygosity)
-    hg <- x %>% filter(type == "global") %>% pull(heterozygosity)
-    return(c(hl, hg))
+    HS <- x %>% filter(type == "S") %>% pull(H)
+    HT <- x %>% filter(type == "T") %>% pull(H)
+    return(c(HS, HT))
   }
-
 
   s_scheme_1 <- reactive({
     itt = 1
-    teta = 4 * input$Ntot0 * input$mu
-    H0 = teta / (1+teta)
-    out_data <- trajectories(m = 0, yini = c(H0, H0))
-    gen_h_crit <- out_data %>% filter(type == "local", heterozygosity > input$h_scheme_1) %>% pull(generation) %>% max()
+    teta = 4 * input$N0 * input$mu
+    H0 = teta / (1 + teta)
+    out_data <- forward_H(m = 0, yini = c(H0(), H0()))
+    gen_h_crit <- out_data %>% filter(type == "S", H > input$h_scheme_1) %>% pull(generation) %>% max()
     out_data <- out_data %>% filter(generation < gen_h_crit)
 
     while(max(out_data$generation) < input$generations){
       itt = itt + 1
-      H_R0 <- last_hets(out_data) # Heterozygosities prior to rescue
-      rescued_H <-   rescue_H(max(out_data$generation), input$L, H_R0[1], H_R0[2], input$r_frac)
-      decline_data <- trajectories(
+      H_R0 <- last_H(out_data) # Heterozygosities prior to rescue
+      rescued_H <-   rescue_H(max(out_data$generation), input$L, H_R0[1], H_R0[2], input$R)
+      decline_data <- forward_H(
         generations = max(rescued_H$generation)+1:input$generations,
-        m = 0, yini = last_hets(rescued_H))
-      rescue_local_het <- rescued_H %>% filter(type == "local") %>% pull(heterozygosity)
+        m = 0, yini = last_H(rescued_H))
+      rescue_local_het <- rescued_H %>% filter(type == "S") %>% pull(H)
       if(rescue_local_het - 0.01 > input$h_scheme_1){
-        gen_h_crit <- decline_data %>% filter(type == "local", heterozygosity > input$h_scheme_1) %>% pull(generation) %>% max()
+        gen_h_crit <- decline_data %>% filter(type == "S", H > input$h_scheme_1) %>% pull(generation) %>% max()
         decline_data <- decline_data %>% filter(generation < gen_h_crit)
       }
       out_data <- rbind(out_data, rescued_H, decline_data)
@@ -116,20 +103,20 @@ shinyServer( function(input, output){
   })
   
   s_scheme_2 <- reactive({
-    teta = 4 * input$Ntot0 * input$mu
-    H0 = teta / (1+teta)
-    out_data <- trajectories(m = 0, yini = c(H0, H0))
-    gen_h_crit <- out_data %>% filter(type == "local", heterozygosity > input$h_scheme_2) %>% pull(generation) %>% max()
+    teta = 4 * input$N0 * input$mu
+    H0 = teta / (1 + teta)
+    out_data <- forward_H(m = 0, yini = c(H0(), H0()))
+    gen_h_crit <- out_data %>% filter(type == "S", H > input$h_scheme_2) %>% pull(generation) %>% max()
     out_data <- out_data %>% filter(generation < gen_h_crit)
     itt = 1
     while(max(out_data$generation) < input$generations ){
       itt <- itt + 1
       N <- input$N
-      migration_rates <- c(0,1/(6*N),1/(4*N),1/(2*N),1/N,2/N,3/N,4/N)
-      migration_period <- trajectories(generations = max(out_data$generation)+1:input$generations, m = migration_rates[itt], yini = last_hets(out_data))
-      max_het <- migration_period %>% filter(type == "local") %>% summarize(heterozygosity = max(heterozygosity))
+      migration_rates <- c(0, 1/(6*N), 1/(4*N), 1/(2*N), 1/N, 2/N, 3/N, 4/N)
+      migration_period <- forward_H(generations = max(out_data$generation)+1:input$generations, m = migration_rates[itt], yini = last_H(out_data))
+      max_het <- migration_period %>% filter(type == "S") %>% summarize(H = max(H))
       if(max_het - 0.01 > input$h_scheme_2 & itt < 8){
-        gen_h_crit <- migration_period %>% filter(type == "local", heterozygosity > input$h_scheme_2) %>% pull(generation) %>% max()
+        gen_h_crit <- migration_period %>% filter(type == "S", H > input$h_scheme_2) %>% pull(generation) %>% max()
         migration_period <- migration_period %>% filter(generation < gen_h_crit)
       }
       out_data <- rbind(out_data, migration_period)
@@ -139,7 +126,6 @@ shinyServer( function(input, output){
     out_data$scenario = "Scheme 2"
     out_data
   })
-
 
   scenario_switcher <- function(x){
     if(x == "no_migration") {
@@ -156,13 +142,12 @@ shinyServer( function(input, output){
   }
 
   get_plot_data <- reactive({
-    H0 = 4 * input$Ntot0 * input$mu / (1 + 4 * input$Ntot0 * input$mu)
     out <- bind_rows(lapply(input$scenarios, scenario_switcher))
     out$scenario <- factor(out$scenario, levels = c("No migration","Full admixture","One mig per gen", "Scheme 1", "Scheme 2"))
     if(input$which_het == 1){
-      out <- out %>% filter(type == "local")
+      out <- out %>% filter(type == "S")
     } else if(input$which_het == 2){
-      out <- out %>% filter(type == "global")
+      out <- out %>% filter(type == "T")
     }
     out
   })
@@ -177,11 +162,11 @@ shinyServer( function(input, output){
   output$distPlot <- renderPlot({
     plot_data <- get_plot_data()
 
-    p <- ggplot(plot_data, aes(x = generation, y = heterozygosity, color = scenario, linetype = type)) + geom_line(alpha = 0.9, size = 1) + xlab("Generation") + ylab("Heterozygosity")
+    p <- ggplot(plot_data, aes(x = generation, y = H, color = scenario, linetype = type)) + geom_line(alpha = 0.9, size = 1) + xlab("Generation") + ylab("Heterozygosity")
 
     font_size = 24
     p <- p + theme_minimal(base_size = font_size)
-    p <- p + scale_color_manual(values = colors, name = "Migration") + scale_linetype_manual(values = c("global" = "solid", "local" = "dashed"), name = "Heterozygosity") + scale_size_manual(values = c("global" = 3, "local" = 5), name = "Heterozygosity")
+    p <- p + scale_color_manual(values = colors, name = "Migration") + scale_linetype_manual(values = c("T" = "solid", "S" = "dashed"), name = "Heterozygosity") + scale_size_manual(values = c("T" = 3, "S" = 5), name = "Heterozygosity")
     if (any(input$scenarios == "scheme_1")) {
       p <- p + geom_hline(yintercept = input$h_scheme_1, color = 'red', linetype = 'dotted')
     }

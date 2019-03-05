@@ -36,7 +36,7 @@ shinyUI(fluidPage(
             max   = 10000,
             value = 100
             ),
-          sliderInput("Ntot0",
+          sliderInput("N0",
             info("Original population size:", "The estimated population size prior to anthropogenic population decline."),
             min   = 1000,
             max   = 1e6,
@@ -80,11 +80,7 @@ shinyUI(fluidPage(
             "Heterozygosity threshold for Scheme 2",
             min = 0, max = 1, value = 0.2
           ),
-          sliderInput('r_rate',
-            'Rescue rate',
-            min = 0, max = 1, value = 1
-          ),
-          sliderInput('r_frac',
+          sliderInput('R',
             'Proportion of alleles replaced during rescue',
             min = 0, max = 1, value = 0.2
           )
