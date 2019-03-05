@@ -1,12 +1,5 @@
 library(shiny)
 library(shinyBS)
-# popify(bsButton("pointlessButton", "Button", style = "primary", size = "large"),
-# +          "A Pointless Button",
-# +          "This button is <b>pointless</b>. It does not do <em>anything</em>!"),
-#style="display: flex;justify-content:space-between;,"
-#  tags$head(
-#        tags$style(type="text/css", "label{ display: inline}")
-#      ),
 
 info <- function(label = "Label", info_content = "add content") {
   div(
