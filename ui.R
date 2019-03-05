@@ -1,7 +1,23 @@
 library(shiny)
+library(shinyBS)
+# popify(bsButton("pointlessButton", "Button", style = "primary", size = "large"),
+# +          "A Pointless Button",
+# +          "This button is <b>pointless</b>. It does not do <em>anything</em>!"),
+
+info <- function(label = "Label", info_content = "add content") {
+  div(style="display: flex;justify-content:space-between;",
+    p(label),
+    p( 
+      popify(icon("info-circle"), title = NULL, content = info_content, placement = "right", trigger = "click")
+    )
+  )
+}
 
 # Define UI for application that draws a histogram
 shinyUI(fluidPage(
+  tags$head(
+        tags$style(type="text/css", "label{ display: inline}")
+      ),
   # Application title
   titlePanel("One Migrant Too Many"),
   # Sidebar with a slider input for the number of bins
@@ -9,11 +25,10 @@ shinyUI(fluidPage(
     column(3,
       tabsetPanel(type = "tabs",
         tabPanel("Demographics",
-          sliderInput("L",
-            "Number of demes:",
+          sliderInput("L", info("Number of demes:", "The number of isolated populations."),
             min   = 1,
             max   = 50,
-            value = 10
+            value = 5
             ),
           sliderInput("N",
             "Individuals (Ne) per deme:",
@@ -22,19 +37,19 @@ shinyUI(fluidPage(
             value = 100
             ),
           sliderInput("Ntot0",
-            "Original population size:",
+            info("Original population size:", "The estimated population size prior to anthropogenic population decline."),
             min   = 1000,
             max   = 1e6,
             value = 1e5
             ),
           sliderInput("generations",
-            "Generations:",
+            info("Generations:", "The number of generations to run the simulation for"),
             min   = 10,
             max   = 5000,
             value = 3000
             ),
           numericInput("mu",
-            "Mutation rate:",
+            info("Mutation rate:", "Microsattelite ~ 1e-5, SNP ~ 1e-8"),
             step = 1e-8,
             value = 1e-5
             )
@@ -44,24 +59,24 @@ shinyUI(fluidPage(
           checkboxGroupInput("scenarios",
           label = NULL,
             choices = list(
-                        "No migration" = "No migration",
-                        "Full admixture" = "Full admixture",
-                        "One migrant per generation" = "One migrant per generation",
-                        "Heterozygosity threshold" = "Heterozygosity threshold",
-                        "Population decline (Not implemented yet)" = "Population decline"
-                      ),
-            selected = c("No migration", "Full admixture", "One migrant per generation")
+                "No migration", "Populations are isolated" = "no_migration",
+                "Full admixture" = "full_admixture",
+                "One migrant per generation" = "ompg",
+                "Scheme 1 (Population decline threshold)" = "scheme_1",
+                "Scheme 2 (Local heterozygosity threshold)" = "scheme_2"),
+            selected = c("no_migration", "full_admixture", "ompg",
+                         "scheme_1", "scheme_2")
           ),
           hr(),
           h3("Scenario parameters"),
           p("These parameters are shared across all applicable scenarios."),
-          sliderInput("h_critical",
-            "Critical threshold of heterozygosity",
-            min = 0, max = 1, value = 0.2
-          ),
-          sliderInput('h_pop_decline',
+          sliderInput('h_scheme_1',
             'Heterozygosity threshold for population decline',
             min = 0, max = 1, value = 0.1
+          ),
+          sliderInput("h_scheme_2",
+            "Critical threshold of heterozygosity",
+            min = 0, max = 1, value = 0.2
           ),
           sliderInput('r_rate',
             'Rescue rate',
@@ -76,11 +91,6 @@ shinyUI(fluidPage(
           radioButtons("which_het", label = h3("Plot Heterozygosity"),
              choices = list("Local" = 1, "Global" = 2, "Both" = 3),
              selected = 3
-          ),
-          checkboxGroupInput("plot_thresholds",
-            label = h3("Thresholds"),
-            choices = list("Plot h critical" = "h_critical",
-                           "Plot h population decline" = "h_pop_decline")
           )
         ) #tabpanel
       ) #tabsetpanel
@@ -97,6 +107,11 @@ shinyUI(fluidPage(
         downloadButton('downloadPlot', 'Download Plot')
         )
       )
-    )#fluidRow
+    ),
+    HTML("<script>
+$(document).ready(function(){
+  $('[data-toggle=\\\"popover\\\"]').popover(); 
+});
+</script>")#fluidRow
   )#fluidPage
 )#shinyui
