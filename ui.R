@@ -3,21 +3,21 @@ library(shinyBS)
 # popify(bsButton("pointlessButton", "Button", style = "primary", size = "large"),
 # +          "A Pointless Button",
 # +          "This button is <b>pointless</b>. It does not do <em>anything</em>!"),
+#style="display: flex;justify-content:space-between;,"
+#  tags$head(
+#        tags$style(type="text/css", "label{ display: inline}")
+#      ),
 
 info <- function(label = "Label", info_content = "add content") {
-  div(style="display: flex;justify-content:space-between;",
-    p(label),
-    p( 
-      popify(icon("info-circle"), title = NULL, content = info_content, placement = "right", trigger = "click")
+  div(
+    p(label,
+      popify(icon("info-circle"), title = NULL, content = info_content, placement = "right", trigger = "hover")
     )
   )
 }
 
 # Define UI for application that draws a histogram
 shinyUI(fluidPage(
-  tags$head(
-        tags$style(type="text/css", "label{ display: inline}")
-      ),
   # Application title
   titlePanel("One Migrant Too Many"),
   # Sidebar with a slider input for the number of bins
@@ -58,24 +58,26 @@ shinyUI(fluidPage(
           h3("Choose scenarios to plot"),
           checkboxGroupInput("scenarios",
           label = NULL,
-            choices = list(
-                "No migration", "Populations are isolated" = "no_migration",
-                "Full admixture" = "full_admixture",
-                "One migrant per generation" = "ompg",
-                "Scheme 1 (Population decline threshold)" = "scheme_1",
-                "Scheme 2 (Local heterozygosity threshold)" = "scheme_2"),
+            choiceNames = list(
+              info("No migration", "All populations are isolated in perpetuity."),
+              info("Full admixture", "The populations fully mix with each other."),
+              info("One migrant per generation", "One individual per genearation migrates into each population."),
+              info("Scheme 1","A genetic rescue occurs when the local heterozygosity drops below a set threshold."),
+              info("Scheme 2", "Migration is allowed at increasing rates once heterozygosity drops to a set threshold.")
+              ),
+            choiceValues = list("no_migration", "full_admixture", "ompg",
+                                "scheme_1", "scheme_2"),
             selected = c("no_migration", "full_admixture", "ompg",
                          "scheme_1", "scheme_2")
           ),
           hr(),
           h3("Scenario parameters"),
-          p("These parameters are shared across all applicable scenarios."),
           sliderInput('h_scheme_1',
-            'Heterozygosity threshold for population decline',
+            'Heterozygosity threshold for Scheme 1',
             min = 0, max = 1, value = 0.1
           ),
           sliderInput("h_scheme_2",
-            "Critical threshold of heterozygosity",
+            "Heterozygosity threshold for Scheme 2",
             min = 0, max = 1, value = 0.2
           ),
           sliderInput('r_rate',
