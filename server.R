@@ -7,7 +7,7 @@ library(ggthemes)
 library(shinyBS)
 
 # Define server logic required to draw a histogram
-shinyServer(function(input, output) {
+shinyServer( function(input, output) {
 
   heterozygosities <- function(times, y, parms){
     L = parms[1]; N = parms[2]; mu = parms[3]; m = parms[4]; rrate = parms[5]; rfrac = parms[6];
@@ -35,31 +35,6 @@ shinyServer(function(input, output) {
     return(out_df)
   }
 
-  trajectories2 <- function(generations = 1:input$generations, L = input$L,
-    N = input$N, mu = input$mu, Ntot0 = input$Ntot0, m = 0,
-    rrate = input$r_rate, rfrac = input$r_frac, yini) {
-    browser()
-    times <- generations - min(generations) + 1
-    out_m <- ode(
-      times = times,
-               y = yini,
-               func = heterozygosities,
-               parms = c(L, N, mu, m, rrate, rfrac)
-             )
-    out_df <- tibble(
-                generation = rep(generations, 2),
-                type = rep(c("local", "global"), each = max(times)),
-                heterozygosity = c(out_m[, 2], out_m[, 3])
-              )
-    return(out_df)
-  }
-
-
-  colors <- c("No migration" = rgb(0,0,255, maxColorValue = 255),
-              "Full admixture" = rgb(0,0,0, maxColorValue = 255),
-              "One mig per gen" = rgb(0,255,0, maxColorValue = 255),
-              "Scheme 1" = rgb(255, 165, 0, maxColorValue = 255),
-              "Scheme 2" = rgb(160, 32, 240, maxColorValue = 255))
 
   # Scenario functions.
 
@@ -126,7 +101,6 @@ shinyServer(function(input, output) {
   })
   
   s_scheme_2 <- reactive({
-
     teta = 4 * input$Ntot0 * input$mu
     H0 = teta / (1+teta)
     out_data <- trajectories(m = 0, rrate = 0, yini = c(H0, H0))
@@ -178,30 +152,36 @@ shinyServer(function(input, output) {
     out
   })
 
+  colors <- c("No migration"    = rgb(0,0,255, maxColorValue = 255),
+              "Full admixture"  = rgb(0,0,0, maxColorValue = 255),
+              "One mig per gen" = rgb(0,255,0, maxColorValue = 255),
+              "Scheme 1"        = rgb(255, 165, 0, maxColorValue = 255),
+              "Scheme 2"        = rgb(160, 32, 240, maxColorValue = 255))
 
-output$distPlot <- renderPlot({
-  plot_data <- get_plot_data()
 
-  p <- ggplot(plot_data, aes(x = generation, y = heterozygosity, color = scenario, linetype = type)) + geom_line(alpha = 0.9, size = 1) + xlab("Generation") + ylab("Heterozygosity")
+  output$distPlot <- renderPlot({
+    plot_data <- get_plot_data()
 
-  font_size = 24
-  p <- p + theme_minimal(base_size = font_size)
-  p <- p + scale_color_manual(values = colors, name = "Migration") + scale_linetype_manual(values = c("global" = "solid", "local" = "dashed"), name = "Heterozygosity") + scale_size_manual(values = c("global" = 3, "local" = 5), name = "Heterozygosity")
-  if (any(input$scenarios == "scheme_1")) {
-    p <- p + geom_hline(yintercept = input$h_scheme_1, color = 'red', linetype = 'dotted')
-  }
-  if (any(input$scenarios == "scheme_2")) {
-    p <- p + geom_hline(yintercept = input$h_scheme_2, color = 'red', linetype = 'dotted')
-  }
+    p <- ggplot(plot_data, aes(x = generation, y = heterozygosity, color = scenario, linetype = type)) + geom_line(alpha = 0.9, size = 1) + xlab("Generation") + ylab("Heterozygosity")
 
-  p
-
-})
-
-output$downloadPlot <- downloadHandler(
-    filename = function(){input$plot_filename},
-    content = function(file) {
-        ggsave(file, plot = makePlot(), device = "pdf", width = 16, height = 10)
+    font_size = 24
+    p <- p + theme_minimal(base_size = font_size)
+    p <- p + scale_color_manual(values = colors, name = "Migration") + scale_linetype_manual(values = c("global" = "solid", "local" = "dashed"), name = "Heterozygosity") + scale_size_manual(values = c("global" = 3, "local" = 5), name = "Heterozygosity")
+    if (any(input$scenarios == "scheme_1")) {
+      p <- p + geom_hline(yintercept = input$h_scheme_1, color = 'red', linetype = 'dotted')
     }
-  )
-})
+    if (any(input$scenarios == "scheme_2")) {
+      p <- p + geom_hline(yintercept = input$h_scheme_2, color = 'red', linetype = 'dotted')
+    }
+
+    p
+
+  }) #renderPlot
+
+  output$downloadPlot <- downloadHandler(
+      filename = function(){input$plot_filename},
+      content = function(file) {
+          ggsave(file, plot = output$distPlot, device = "pdf", width = 16, height = 10)
+      }
+  ) # downloadHandler
+}) #shinyServer
