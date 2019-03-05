@@ -9,7 +9,6 @@ info <- function(label = "Label", info_content = "add content") {
   )
 }
 
-# Define UI for application that draws a histogram
 shinyUI(fluidPage(
   # Application title
   titlePanel("One Migrant Too Many"),
