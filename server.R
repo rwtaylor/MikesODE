@@ -28,21 +28,20 @@ shinyServer( function(input, output){
 
   heterozygosities <- function(times, y, parms){
     L = parms[1]; N = parms[2]; mu = parms[3]; m = parms[4]; rrate = parms[5]; rfrac = parms[6];
-    dH_within  = -y[1]/(2*N) + 2*mu*(1-y[1]) + 2*m*(y[2]-y[1]) + 2*rrate*rfrac*(y[2]-y[1]) - rrate*(rfrac^2)*(2*y[2]-y[1]);
-    dH_general = -y[1]/(2*N*L) + 2*mu*(1-y[2]) - (2*y[2]-y[1]) * rrate * (rfrac^2) / L
+    dH_within  = -y[1]/(2*N) + 2*mu*(1-y[1]) + 2*m*(y[2]-y[1])
+    dH_general = -y[1]/(2*N*L) + 2*mu*(1-y[2])
     list(c(dH_within,dH_general))
   }
 
   trajectories <- function(generations = 1:input$generations, L = input$L,
-    N = input$N, mu = input$mu, Ntot0 = input$Ntot0, m = 0,
-    rrate = input$r_rate, rfrac = input$r_frac, yini) {
+    N = input$N, mu = input$mu, Ntot0 = input$Ntot0, m = 0, yini) {
     times <- generations - min(generations) + 1
     
     out_m <- ode(
                times = times,
                y = yini,
                func = heterozygosities,
-               parms = c(L, N, mu, m, rrate, rfrac)
+               parms = c(L, N, mu, m)
              )
     out_df <- tibble(
                 generation = rep(generations, 2),
@@ -59,7 +58,7 @@ shinyServer( function(input, output){
     teta = 4 * input$Ntot0 * input$mu
     H0 = teta / (1+teta)
 
-    out <- trajectories(m = 0, rrate = 0, yini = c(H0, H0))
+    out <- trajectories(m = 0, yini = c(H0, H0))
     out$scenario = "No migration"
     out
   })
@@ -67,7 +66,7 @@ shinyServer( function(input, output){
   s_full_admix <- reactive({
     teta = 4 * input$Ntot0 * input$mu
     H0 = teta / (1+teta)
-    out <- trajectories(m = 1, rrate = 0, yini = c(H0, H0))
+    out <- trajectories(m = 1, yini = c(H0, H0))
     out$scenario = "Full admixture"
     out
   })
@@ -75,7 +74,7 @@ shinyServer( function(input, output){
   s_ompg <- reactive({
     teta = 4 * input$Ntot0 * input$mu
     H0 = teta / (1+teta)
-    out <- trajectories(m = 1/input$N, rrate = 0, yini = c(H0, H0))
+    out <- trajectories(m = 1/input$N, yini = c(H0, H0))
     out$scenario = "One mig per gen"
     out
   })
@@ -92,7 +91,7 @@ shinyServer( function(input, output){
     itt = 1
     teta = 4 * input$Ntot0 * input$mu
     H0 = teta / (1+teta)
-    out_data <- trajectories(m = 0, rrate = 0, yini = c(H0, H0))
+    out_data <- trajectories(m = 0, yini = c(H0, H0))
     gen_h_crit <- out_data %>% filter(type == "local", heterozygosity > input$h_scheme_1) %>% pull(generation) %>% max()
     out_data <- out_data %>% filter(generation < gen_h_crit)
 
@@ -102,7 +101,7 @@ shinyServer( function(input, output){
       rescued_H <-   rescue_H(max(out_data$generation), input$L, H_R0[1], H_R0[2], input$r_frac)
       decline_data <- trajectories(
         generations = max(rescued_H$generation)+1:input$generations,
-        m = 0, rrate = 0, yini = last_hets(rescued_H))
+        m = 0, yini = last_hets(rescued_H))
       rescue_local_het <- rescued_H %>% filter(type == "local") %>% pull(heterozygosity)
       if(rescue_local_het - 0.01 > input$h_scheme_1){
         gen_h_crit <- decline_data %>% filter(type == "local", heterozygosity > input$h_scheme_1) %>% pull(generation) %>% max()
@@ -119,7 +118,7 @@ shinyServer( function(input, output){
   s_scheme_2 <- reactive({
     teta = 4 * input$Ntot0 * input$mu
     H0 = teta / (1+teta)
-    out_data <- trajectories(m = 0, rrate = 0, yini = c(H0, H0))
+    out_data <- trajectories(m = 0, yini = c(H0, H0))
     gen_h_crit <- out_data %>% filter(type == "local", heterozygosity > input$h_scheme_2) %>% pull(generation) %>% max()
     out_data <- out_data %>% filter(generation < gen_h_crit)
     itt = 1
@@ -127,7 +126,7 @@ shinyServer( function(input, output){
       itt <- itt + 1
       N <- input$N
       migration_rates <- c(0,1/(6*N),1/(4*N),1/(2*N),1/N,2/N,3/N,4/N)
-      migration_period <- trajectories(generations = max(out_data$generation)+1:input$generations, m = migration_rates[itt], rrate = 0, yini = last_hets(out_data))
+      migration_period <- trajectories(generations = max(out_data$generation)+1:input$generations, m = migration_rates[itt], yini = last_hets(out_data))
       max_het <- migration_period %>% filter(type == "local") %>% summarize(heterozygosity = max(heterozygosity))
       if(max_het - 0.01 > input$h_scheme_2 & itt < 8){
         gen_h_crit <- migration_period %>% filter(type == "local", heterozygosity > input$h_scheme_2) %>% pull(generation) %>% max()
