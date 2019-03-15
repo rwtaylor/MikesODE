@@ -28,13 +28,13 @@ shinyUI(fluidPage(
             max   = 10000,
             value = 100
             ),
-          sliderInput("N0",
+          sliderInput("Ntot0",
             info("Original population size:", "The estimated population size prior to anthropogenic population decline."),
             min   = 1000,
             max   = 1e6,
             value = 1e5
             ),
-          sliderInput("G_total",
+          sliderInput("G_t",
             info("Generations:", "The number of generations to run the simulation for"),
             min   = 10,
             max   = 5000,
@@ -75,6 +75,10 @@ shinyUI(fluidPage(
           sliderInput('R',
             'Proportion of alleles replaced during rescue',
             min = 0, max = 1, value = 0.2
+          ),
+          sliderInput('lambda',
+            'Probability of random rescue per deme per generation (applies to No Migration and One Migrant Per Generation scenarios)',
+            min = 0, max = 0.1, value = 0
           )
         ), #tabpanel scenarios
         tabPanel("Plot Options",
