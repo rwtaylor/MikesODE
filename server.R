@@ -98,14 +98,19 @@ trajectory_scheme2 <- function(scenario, Ntot0, G_t, L, N, mu, m = 0,
     HS0 = HT0 = theta0 / (1 + theta0)
     traj <- tibble(Time = seq(0, G_t), HS = NA, HT = NA, scenario = scenario)
     traj[1,c("HS", "HT")] <- c(HS0, HT0)
+    migration_rates <- c(1/(6*N), 1/(4*N), 1/(2*N), 1/N, 2/N, 3/N)
+    m_itt <- 0
     for (i in seq(G_t)) {
         HS <- traj[[i, "HS"]]
         HT <- traj[[i, "HT"]]
         # Periodically check HS against the threshold and update the migration
         # rate.
-        if (((i %% update_interval) == 0) & (HS < threshold)) {
+        if (((i %% update_interval) == 0) & (HS < threshold) & m_itt < 6) {
             if (HT > threshold) {
-                m <- m_mult / (4*N) * threshold / (HT - threshold)
+                m_itt <- m_itt + 1
+                print(m_itt)
+                #m <- m_mult / (4*N) * threshold / (HT - threshold)
+                m <- migration_rates[m_itt]
                 m <- min(m, m_max)
             }
         }
@@ -137,7 +142,6 @@ shinyServer( function(input, output){
   get_plot_data <- reactive({
     #browser()
     out <- map_dfr(input$scenarios, scenario_switcher)
-    print(out)
     out$scenario <- factor(out$scenario, levels = c("No migration","Full admixture", "One mig per gen", "Scheme 1", "Scheme 2"))
     if(input$which_het == 1){
       out <- out %>% filter(type == "S")
