@@ -98,14 +98,15 @@ trajectory_scheme2 <- function(scenario, Ntot0, G_t, L, N, mu, m = 0,
     HS0 = HT0 = theta0 / (1 + theta0)
     traj <- tibble(Time = seq(0, G_t), HS = NA, HT = NA, scenario = scenario)
     traj[1,c("HS", "HT")] <- c(HS0, HT0)
-    migration_rates <- c(1/(6*N), 1/(4*N), 1/(2*N), 1/N, 2/N, 3/N)
+#    migration_rates <- c(1/(6*N), 1/(4*N), 1/(2*N), 1/N, 2/N, 3/N)
+    migration_rates <- c(1/(20*N), 1/(10*N), 1/(6*N), 1/(4*N), 1/(2*N), 1/N, 2/N, 3/N)
     m_itt <- 0
     for (i in seq(G_t)) {
         HS <- traj[[i, "HS"]]
         HT <- traj[[i, "HT"]]
         # Periodically check HS against the threshold and update the migration
         # rate.
-        if (((i %% update_interval) == 0) & (HS < threshold) & m_itt < 6) {
+        if (((i %% update_interval) == 0) & (HS < threshold) & m_itt < 8) {
             if (HT > threshold) {
                 m_itt <- m_itt + 1
                 print(m_itt)
