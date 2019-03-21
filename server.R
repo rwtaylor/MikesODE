@@ -109,7 +109,7 @@ trajectory_scheme2 <- function(scenario, Ntot0, G_t, L, N, mu, m = 0,
         if (((i %% update_interval) == 0) & (HS < threshold) & m_itt < 8) {
             if (HT > threshold) {
                 m_itt <- m_itt + 1
-                print(m_itt)
+                # print(m_itt)
                 #m <- m_mult / (4*N) * threshold / (HT - threshold)
                 m <- migration_rates[m_itt]
                 m <- min(m, m_max)

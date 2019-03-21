@@ -11,27 +11,29 @@ info <- function(label = "Label", info_content = "add content") {
 
 shinyUI(fluidPage(
   # Application title
-  titlePanel("One Migrant Too Many"),
+  titlePanel("Genetic Management of Fragmented Populations"),
   # Sidebar with a slider input for the number of bins
+
   fluidRow(
     column(3,
       tabsetPanel(type = "tabs",
         tabPanel("Demographics",
+          br(),
+          submitButton("Update Plot", icon("refresh")),
+          br(),
           sliderInput("L", info("Number of demes:", "The number of isolated populations."),
             min   = 1,
             max   = 50,
             value = 5
             ),
-          sliderInput("N",
+          numericInput("N",
             "Individuals (Ne) per deme:",
             min   = 1,
-            max   = 10000,
             value = 100
             ),
-          sliderInput("Ntot0",
+          numericInput("Ntot0",
             info("Original population size:", "The estimated population size prior to anthropogenic population decline."),
-            min   = 1000,
-            max   = 1e6,
+            min   = 1,
             value = 1e5
             ),
           sliderInput("G_t",
@@ -47,6 +49,9 @@ shinyUI(fluidPage(
             )
         ),
         tabPanel("Scenarios",
+          br(),
+          submitButton("Update Plot", icon("refresh")),
+          br(),
           h3("Choose scenarios to plot"),
           checkboxGroupInput("scenarios",
           label = NULL,
@@ -82,6 +87,9 @@ shinyUI(fluidPage(
           )
         ), #tabpanel scenarios
         tabPanel("Plot Options",
+          br(),
+          submitButton("Update Plot", icon("refresh")),
+          br(),
           radioButtons("which_het", label = h3("Plot Heterozygosity"),
              choices = list("Local" = 1, "Global" = 2, "Both" = 3),
              selected = 3
@@ -97,7 +105,7 @@ shinyUI(fluidPage(
     column(3,
       wellPanel(
         h3("Save Plot"),
-        textInput('plot_filename', "OM2M.pdf", label = "Filename"),
+        textInput('plot_filename', "Heterozygosity.pdf", label = "Filename"),
         downloadButton('downloadPlot', 'Download Plot')
         )
       )
