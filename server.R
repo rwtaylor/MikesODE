@@ -19,7 +19,8 @@ colors <- c("No migration"    = rgb(0,0,255, maxColorValue = 255),
             "Full admixture"  = rgb(0,0,0, maxColorValue = 255),
             "One mig per gen" = rgb(0,255,0, maxColorValue = 255),
             "Scheme 1"        = rgb(255, 165, 0, maxColorValue = 255),
-            "Scheme 2"        = rgb(160, 32, 240, maxColorValue = 255))
+            "Scheme 2"        = rgb(160, 32, 240, maxColorValue = 255),
+            "Random Rescue"   = rgb(255,192,203, maxColorValue = 255))
 
 
 # "Standard model" = finite island model with mutation, migration, and drift,
@@ -128,22 +129,26 @@ shinyServer( function(input, output){
 
   scenario_switcher <- function(x){
     if(x == "no_migration") {
-      trajectory_standard(scenario = "No migration", input$Ntot0, input$G_t, L = input$L, N = input$N, mu = input$mu, m = 0, lambda = input$lambda)
+      trajectory_standard(scenario = "No migration", input$Ntot0, input$G_t, L = input$L, N = input$N, mu = input$mu, m = 0, lambda = 0)
     } else if (x == "full_admixture") {
-      trajectory_standard(scenario = "Full admixture", input$Ntot0, input$G_t, L = input$L, N = input$N, mu = input$mu, m = 0.99, lambda = input$lambda)
+      trajectory_standard(scenario = "Full admixture", input$Ntot0, input$G_t, L = input$L, N = input$N, mu = input$mu, m = 0.99, lambda = 0)
     } else if (x == "ompg") {
-      trajectory_standard(scenario = "One mig per gen", input$Ntot0, input$G_t, L = input$L, N = input$N, mu = input$mu, m = 1/input$N, lambda = input$lambda)
+      trajectory_standard(scenario = "One mig per gen", input$Ntot0, input$G_t, L = input$L, N = input$N, mu = input$mu, m = 1/input$N, lambda = 0)
     } else if (x == "scheme_1") {
       trajectory_scheme1(scenario = "Scheme 1", input$Ntot0, input$G_t, L = input$L, N = input$N, mu = input$mu, R = input$R, threshold = input$h_scheme_1)
     } else if (x == "scheme_2") {
       trajectory_scheme2(scenario = "Scheme 2", input$Ntot0, input$G_t, L = input$L, N = input$N, mu = input$mu, threshold = input$h_scheme_2)
+    } else if (x == "randomrescue") {
+      trajectory_standard(scenario = "Random Rescue", input$Ntot0, input$G_t, L = input$L, N = input$N, mu = input$mu, m = 0, lambda = input$lambda)
     }
   }
 
   get_plot_data <- reactive({
     #browser()
-    out <- map_dfr(input$scenarios, scenario_switcher)
-    out$scenario <- factor(out$scenario, levels = c("No migration","Full admixture", "One mig per gen", "Scheme 1", "Scheme 2"))
+    scenario_list <- input$scenarios
+    if(input$randomrescue == TRUE){scenario_list = c(scenario_list, "randomrescue")}
+    out <- map_dfr(scenario_list, scenario_switcher)
+    out$scenario <- factor(out$scenario, levels = c("No migration","Full admixture", "One mig per gen", "Scheme 1", "Scheme 2", "Random Rescue"))
     if(input$which_het == 1){
       out <- out %>% filter(type == "S")
     } else if(input$which_het == 2){
@@ -173,7 +178,7 @@ shinyServer( function(input, output){
         legend.justification = c(1,1),
         legend.key.size = unit(16, "pt"),
         legend.box = "horizontal"
-        )
+        ) + ylim(input$ylims)
 
     if (any(input$scenarios == "scheme_1")) {
       p <- p + geom_hline(yintercept = input$h_scheme_1,

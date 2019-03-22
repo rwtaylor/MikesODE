@@ -18,9 +18,9 @@ shinyUI(fluidPage(
     column(3,
       tabsetPanel(type = "tabs",
         tabPanel("Demographics",
-          br(),
-          submitButton("Update Plot", icon("refresh")),
-          br(),
+          # br(),
+          # submitButton("Update Plot", icon("refresh")),
+          # br(),
           sliderInput("L", info("Number of demes:", "The number of isolated populations."),
             min   = 1,
             max   = 50,
@@ -49,9 +49,9 @@ shinyUI(fluidPage(
             )
         ),
         tabPanel("Scenarios",
-          br(),
-          submitButton("Update Plot", icon("refresh")),
-          br(),
+          # br(),
+          # submitButton("Update Plot", icon("refresh")),
+          # br(),
           h3("Choose scenarios to plot"),
           checkboxGroupInput("scenarios",
           label = NULL,
@@ -80,19 +80,27 @@ shinyUI(fluidPage(
           sliderInput('R',
             'Proportion of alleles replaced during rescue',
             min = 0, max = 1, value = 0.2
-          ),
-          sliderInput('lambda',
-            'Probability of random rescue per deme per generation (applies to No Migration and One Migrant Per Generation scenarios)',
-            min = 0, max = 0.1, value = 0
           )
         ), #tabpanel scenarios
-        tabPanel("Plot Options",
+        tabPanel("Options",
+          # br(),
+          # submitButton("Update Plot", icon("refresh")),
           br(),
-          submitButton("Update Plot", icon("refresh")),
-          br(),
-          radioButtons("which_het", label = h3("Plot Heterozygosity"),
+          sliderInput('ylims', "Y axis range", min = 0, max = 1, value = c(0,1)),
+          hr(),
+          radioButtons("which_het", label = "Plot Heterozygosity",
              choices = list("Local" = 1, "Global" = 2, "Both" = 3),
              selected = 3
+          ),
+          hr(),
+          h4("Alternative Scenarios"),
+          checkboxInput("randomrescue",
+          "Recurring rescues scenario",
+          value = FALSE
+          ),
+          sliderInput('lambda',
+            'Probability of random rescue per deme per generation',
+            min = 0, max = 0.1, value = 0.01
           )
         ) #tabpanel
       ) #tabsetpanel
